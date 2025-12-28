@@ -1,0 +1,27 @@
+{
+    "manifest_version": 3,
+    "name": "Fintuno MVP",
+    "version": "0.0.1",
+    "description": "Blocks sites until you answer a question.",
+    "permissions": [
+        "storage",
+        "tabs",
+        "webNavigation"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "blocked.html"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}
