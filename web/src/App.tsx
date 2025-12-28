@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import fintunoLogo from '/single.png'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
       <div className="logo-container">
