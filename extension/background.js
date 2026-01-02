@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keep channel open
     }
     if (request.type === 'REPORT_USAGE') {
-        handleReportUsage(request.ms).then(sendResponse);
+        handleReportUsage(request.ms, sender).then(sendResponse);
         return true;
     }
 });
