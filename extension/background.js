@@ -27,9 +27,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 /**
  * Handle usage reporting
  * @param {number} ms 
+ * @param {object} sender
  * @returns {Promise<{allowed: boolean}>}
  */
-async function handleReportUsage(ms) {
+async function handleReportUsage(ms, sender) {
+    // Only count usage for tracked sites
+    if (!sender.tab || !sender.tab.url) return { allowed: true };
+    const url = sender.tab.url;
+    const hostname = new URL(url).hostname;
+    const siteKey = hostname.replace(/^www\./, '');
+
+    // Check if site is tracked
+    const state = await Storage.getSiteState(siteKey);
+    if (!state) {
+        // Not a monitored site, don't count usage
+        // Note: needed for "combined usage of youtube and x"
+        return { allowed: true };
+    }
+
     const usageState = await Storage.incrementGlobalUsage(ms);
     if (usageState.globalUsage >= usageState.dailyLimitMs) {
         return { allowed: false };
@@ -50,34 +65,39 @@ async function handleCheckAccess(url) {
         // Simple normalization: remove www.
         const siteKey = hostname.replace(/^www\./, '');
 
-        // 1. GLOBAL USAGE CHECK
-        const usageState = await Storage.getUsageState();
-        if (usageState.globalUsage >= usageState.dailyLimitMs) {
-            return { allowed: false, reason: 'Daily Limit Reached', siteKey };
+        // 1. GLOBAL USAGE CHECK (Only if site is tracked)
+        const siteState = await Storage.getSiteState(siteKey);
+
+        if (siteState) {
+            const usageState = await Storage.getUsageState();
+            if (usageState.globalUsage >= usageState.dailyLimitMs) {
+                return { allowed: false, reason: 'Daily Limit Reached', siteKey };
+            }
         }
 
-        const state = await Storage.getSiteState(siteKey);
-
-        if (!state) {
+        if (!siteState) {
             // Not tracked, allowed
             // OPTIONAL: Auto-add known blocked sites for demo purposes if not present
             // For now, we assume user/system adds them. 
             // If the simple BLOCKED list from previous version is desireable to migrate:
             const LEGACY_BLOCKED = ["x.com", "youtube.com", "twitter.com"];
             if (LEGACY_BLOCKED.includes(siteKey)) {
-                // Initialize default blocked state for these legacy sites
+                // Initialize default MONITORED state (not blocked yet)
                 const newState = {
                     displayName: siteKey,
-                    isBlocked: true,
-                    blockedUntil: Date.now() + 24 * 60 * 60 * 1000, // Block for 24h by default
+                    isBlocked: false, // Allow access initially, let usage limit handle it
+                    blockedUntil: 0,
                     unblockUntil: 0,
                     lastChangedAt: Date.now()
                 };
                 await Storage.setSiteState(siteKey, newState);
-                return { allowed: false, reason: 'Legacy Block', siteKey };
+                // Don't return false, allow it now that it's monitored
+                return { allowed: true };
             }
             return { allowed: true };
         }
+
+        const state = siteState; // Re-use
 
         const now = Date.now();
 
