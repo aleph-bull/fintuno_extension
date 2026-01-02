@@ -9,7 +9,7 @@ function App() {
   let resetText = "";
   if (resetTimestamp) {
     const date = new Date(parseInt(resetTimestamp));
-    resetText = `Resets at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    resetText = `Resets at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} otherwise.`;
   }
 
   return (
