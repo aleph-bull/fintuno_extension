@@ -1,6 +1,26 @@
-<!--
-  Popup Interface
-  
-  This file defines the HTML structure for the extension's popup.
-  The popup appears when the user clicks the extension icon in the browser toolbar.
--->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            width: 200px;
+            font-family: sans-serif;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #time-left {
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="time-left"></div>
+    <script src="storage.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
