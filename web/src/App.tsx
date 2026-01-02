@@ -11,11 +11,12 @@ function App() {
       </div>
       <h1 className="gradient-text">'[site name]' is Blocked</h1>
       <div className="box">
-        <p className="box-answer-text">Answer the question to unlock '[site name]'!</p>
+        <p className="box-answer-text">Answer the question(s) to unlock '[site name]'</p>
         <p className="box-question-text">What is 2+2?</p>
         <input type="text" inputMode="decimal" className="box-input" placeholder="input your answer here" />
         <button className="submission-button">Submit</button>
       </div>
+      <div className="question-number-text">Question 1 of 3</div>
       <div className="card">
         <p className="fine-text">
           Fintuno, all rights reserved

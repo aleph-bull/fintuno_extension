@@ -1,0 +1,35 @@
+<!--
+  Redirect Page
+  
+  This HTML page is displayed when a user attempts to visit a blocked website.
+  It provides a visual indication of the block and handles the immediate redirect
+  to the configured allowed URL (fintuno-extension.vercel.app).
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0;url=https://fintuno-extension.vercel.app/" />
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #17132c;
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="storage.js"></script>
+    <script src="redirect.js"></script>
+</body>
+
+</html>

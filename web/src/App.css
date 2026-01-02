@@ -92,7 +92,8 @@
 
 .box-answer-text {
   font-size: 1.2rem;
-  padding-left: 18px;
+  padding: 0 9px;
+  box-sizing: border-box;
   font-weight: 600;
   color: #ffffffed;
   width: 100%;
@@ -103,7 +104,8 @@
 
 .box-question-text {
   font-size: 1rem;
-  padding-left: 18px;
+  padding: 0 9px;
+  box-sizing: border-box;
   font-weight: 200;
   color: #ffffff;
   width: 100%;
@@ -150,4 +152,13 @@
 
   /* Subtle glow */
   filter: drop-shadow(0 0 15px rgba(255, 104, 210, 0.3));
+}
+
+.question-number-text {
+  font-size: 0.9rem;
+  color: #ffffffa4;
+  width: 100%;
+  text-align: center;
+  padding-top: 2rem;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
 }

@@ -1,24 +1,127 @@
-const BLOCKED = ["twitter.com", "www.twitter.com"];
+/**
+ * Background Service Worker
+ * 
+ * Authorities logic for blocking and time management.
+ */
 
-function isBlocked(url) {
+importScripts('storage.js');
+
+// Listen for installation/updates
+chrome.runtime.onInstalled.addListener(() => {
+    Storage.init();
+});
+
+// Message Handler: CHECK_ACCESS
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === 'CHECK_ACCESS') {
+        handleCheckAccess(request.url).then(sendResponse);
+        return true; // Keep channel open for async response
+    }
+});
+
+/**
+ * Handle access check request
+ * @param {string} url 
+ * @returns {Promise<{allowed: boolean, reason?: string, siteKey?: string}>}
+ */
+async function handleCheckAccess(url) {
     try {
-        const host = new URL(url).hostname;
-        return BLOCKED.includes(host);
-    } catch {
-        return false;
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+
+        // Simple normalization: remove www.
+        const siteKey = hostname.replace(/^www\./, '');
+
+        const state = await Storage.getSiteState(siteKey);
+
+        if (!state) {
+            // Not tracked, allowed
+            // OPTIONAL: Auto-add known blocked sites for demo purposes if not present
+            // For now, we assume user/system adds them. 
+            // If the simple BLOCKED list from previous version is desireable to migrate:
+            const LEGACY_BLOCKED = ["x.com", "youtube.com", "twitter.com"];
+            if (LEGACY_BLOCKED.includes(siteKey)) {
+                // Initialize default blocked state for these legacy sites
+                const newState = {
+                    displayName: siteKey,
+                    isBlocked: true,
+                    blockedUntil: Date.now() + 24 * 60 * 60 * 1000, // Block for 24h by default
+                    unblockUntil: 0,
+                    lastChangedAt: Date.now()
+                };
+                await Storage.setSiteState(siteKey, newState);
+                return { allowed: false, reason: 'Legacy Block', siteKey };
+            }
+            return { allowed: true };
+        }
+
+        const now = Date.now();
+
+        // Check for temporary unblock
+        if (state.unblockUntil && state.unblockUntil > now) {
+            return { allowed: true, reason: 'Temporarily Unblocked' };
+        }
+
+        // Check if block is active
+        if (state.isBlocked) {
+            if (state.blockedUntil && state.blockedUntil > now) {
+                return { allowed: false, reason: 'Site Blocked', siteKey };
+            } else {
+                // Timer expired, clear block
+                await Storage.setSiteState(siteKey, { isBlocked: false, blockedUntil: 0 });
+                return { allowed: true, reason: 'Block Expired' };
+            }
+        }
+
+        return { allowed: true };
+
+    } catch (e) {
+        console.error("Error checking access:", e);
+        return { allowed: true }; // Fail open
     }
 }
 
-chrome.webNavigation.onCommitted.addListener((details) => {
-    if (details.frameId !== 0) return;
-    if (details.url.startsWith("chrome-extension://")) return;
 
-    if (isBlocked(details.url)) {
-        const blockedUrl =
-            chrome.runtime.getURL("blocked.html") +
-            "?target=" +
-            encodeURIComponent(details.url);
-
-        chrome.tabs.update(details.tabId, { url: blockedUrl });
+// Alarms for expiration cleanup
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (alarm.name.startsWith('expire_')) {
+        const siteKey = alarm.name.replace('expire_', '');
+        await checkAndExpire(siteKey);
     }
 });
+
+async function checkAndExpire(siteKey) {
+    const state = await Storage.getSiteState(siteKey);
+    if (!state) return;
+
+    const now = Date.now();
+    let changed = false;
+
+    if (state.isBlocked && state.blockedUntil <= now && state.blockedUntil !== 0) {
+        state.isBlocked = false;
+        state.blockedUntil = 0;
+        changed = true;
+    }
+
+    if (state.unblockUntil <= now && state.unblockUntil !== 0) {
+        state.unblockUntil = 0;
+        // Revert to blocked status if originally blocked? 
+        // Spec says "unblockUntil (temporary unlock)". Usually implies falling back to block.
+        // Assuming if unblock expires, we just clear the unblock flag. 
+        // If isBlocked was still true, it remains true, handling the re-block.
+        changed = true;
+    }
+
+    if (changed) {
+        await Storage.setSiteState(siteKey, state);
+    }
+}
+
+// Function to set alarms when state changes (can be called from popup/options or messaging)
+// Not strictly needed if we check on access, but good for background cleanup.
+async function setExpirationAlarm(siteKey, timestamp) {
+    const when = timestamp;
+    if (when > Date.now()) {
+        chrome.alarms.create(`expire_${siteKey}`, { when });
+    }
+}
