@@ -73,6 +73,20 @@ async function handleCheckAccess(url) {
             if (usageState.globalUsage >= usageState.dailyLimitMs) {
                 return { allowed: false, reason: 'Daily Limit Reached', siteKey };
             }
+
+            // MIGRATION FIX:
+            // If this is a legacy site and isBlocked is TRUE, it's likely stale state from previous version.
+            // We should reset it to FALSE to allow the usage limit system to take over.
+            const LEGACY_BLOCKED = ["x.com", "youtube.com", "twitter.com"];
+            if (LEGACY_BLOCKED.includes(siteKey) && siteState.isBlocked) {
+                console.log(`Migrating stale state for ${siteKey}: unblocking.`);
+                siteState.isBlocked = false;
+                siteState.blockedUntil = 0;
+                await Storage.setSiteState(siteKey, siteState);
+
+                // Continue to check other conditions below, but now isBlocked is false
+                // so it shouldn't fall into the block check at the bottom.
+            }
         }
 
         if (!siteState) {
