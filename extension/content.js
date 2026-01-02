@@ -26,7 +26,29 @@
 
             // Replace location to avoid history stacking (user can't back-button to blocked site)
             window.location.replace(redirectUrl);
+            return;
         }
+
+        // Access Allowed - Start usage tracking
+        const REPORT_INTERVAL_MS = 10000; // 10 seconds
+        setInterval(async () => {
+            if (!document.hidden) {
+                try {
+                    const response = await chrome.runtime.sendMessage({
+                        type: 'REPORT_USAGE',
+                        ms: REPORT_INTERVAL_MS
+                    });
+
+                    if (response && response.allowed === false) {
+                        // Limit reached while browsing
+                        location.reload();
+                    }
+                } catch (e) {
+                    // connection error etc
+                }
+            }
+        }, REPORT_INTERVAL_MS);
+
     } catch (e) {
         // Background might be waking up or extension context invalidated
         console.error("Fintuno Content Script Error:", e);

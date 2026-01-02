@@ -12,12 +12,30 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Message Handler: CHECK_ACCESS
+// Message Handler: CHECK_ACCESS & REPORT_USAGE
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'CHECK_ACCESS') {
         handleCheckAccess(request.url).then(sendResponse);
-        return true; // Keep channel open for async response
+        return true; // Keep channel open
+    }
+    if (request.type === 'REPORT_USAGE') {
+        handleReportUsage(request.ms).then(sendResponse);
+        return true;
     }
 });
+
+/**
+ * Handle usage reporting
+ * @param {number} ms 
+ * @returns {Promise<{allowed: boolean}>}
+ */
+async function handleReportUsage(ms) {
+    const usageState = await Storage.incrementGlobalUsage(ms);
+    if (usageState.globalUsage >= usageState.dailyLimitMs) {
+        return { allowed: false };
+    }
+    return { allowed: true };
+}
 
 /**
  * Handle access check request
@@ -31,6 +49,12 @@ async function handleCheckAccess(url) {
 
         // Simple normalization: remove www.
         const siteKey = hostname.replace(/^www\./, '');
+
+        // 1. GLOBAL USAGE CHECK
+        const usageState = await Storage.getUsageState();
+        if (usageState.globalUsage >= usageState.dailyLimitMs) {
+            return { allowed: false, reason: 'Daily Limit Reached', siteKey };
+        }
 
         const state = await Storage.getSiteState(siteKey);
 

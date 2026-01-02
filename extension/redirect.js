@@ -21,15 +21,19 @@
     }
 
     const state = await Storage.getSiteState(siteKey);
+    const usageState = await Storage.getUsageState();
 
-    if (state) {
+    if (state || usageState) {
         const dest = new URL("https://fintuno-extension.vercel.app/");
-        dest.searchParams.set('site', state.displayName || siteKey);
-        dest.searchParams.set('isBlocked', state.isBlocked);
+        dest.searchParams.set('site', (state && state.displayName) ? state.displayName : siteKey);
+        dest.searchParams.set('isBlocked', state ? state.isBlocked : false);
 
         // Pass timestamps. If 0 or null, pass 0.
-        dest.searchParams.set('blockedUntil', state.blockedUntil || 0);
-        dest.searchParams.set('unblockUntil', state.unblockUntil || 0);
+        dest.searchParams.set('blockedUntil', (state && state.blockedUntil) ? state.blockedUntil : 0);
+        dest.searchParams.set('unblockUntil', (state && state.unblockUntil) ? state.unblockUntil : 0);
+
+        // Pass daily limit reset time
+        dest.searchParams.set('resetAt', usageState.nextReset);
 
         window.location.replace(dest.toString());
     } else {
