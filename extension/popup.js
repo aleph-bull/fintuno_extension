@@ -4,7 +4,9 @@
  * Displays time left for the current site if it is in the monitored list.
  */
 
-document.addEventListener('DOMContentLoaded', async () => {
+const UPDATE_INTERVAL_MS = 1000;
+
+async function updateTimer() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     if (!tab || !tab.url) return;
@@ -28,10 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const div = document.getElementById('time-left');
             div.textContent = `Time Left: ${timeString}`;
-
-            // Optional: Auto-update? The popup closes when you click away, 
-            // so static or simple interval is fine.
-            // Let's stick to static for now as per request "make a basic time left"
         } else {
             // Not in list, leave blank
             document.getElementById('time-left').textContent = "";
@@ -40,4 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
         console.error("Popup Error:", e);
     }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateTimer();
+    setInterval(updateTimer, UPDATE_INTERVAL_MS);
 });

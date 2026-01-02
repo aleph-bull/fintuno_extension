@@ -30,7 +30,7 @@
         }
 
         // Access Allowed - Start usage tracking
-        const REPORT_INTERVAL_MS = 10000; // 10 seconds
+        const REPORT_INTERVAL_MS = 1000; // 1 second
         setInterval(async () => {
             if (!document.hidden) {
                 try {
