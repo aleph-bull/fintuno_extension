@@ -1,20 +1,12 @@
 import fintunoLogo from '/long.png'
 import './App.css'
 import { useState, useEffect, useRef } from 'react'
+import { QuestionGenerator } from './utils/question_generation';
+import type { QuestionResponse } from './utils/question_generation';
 
-interface QuestionResponse {
-  qid: string;
-  prompt: string;
-  format: string;
-  type: string;
-  difficulty: number;
-}
+const generator = new QuestionGenerator();
 
-interface VerifyResponse {
-  ok: boolean;
-  xp: number;
-  correct_answer?: number;
-}
+
 
 function App() {
   const params = new URLSearchParams(window.location.search);
@@ -40,79 +32,58 @@ function App() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fetchQuestion = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: 'extension_user',
-          possible_qtypes: [
-            'arithmetic', 'multiplication', 'division',
-            'growth_compounding', 'ratios_margins',
-            'breakeven_estimation', 'splits_allocation'
-          ],
-          difficulty_range: [0, 4]
-        })
-      });
-      const data = await res.json();
-      setQuestion(data);
-    } catch (err) {
-      console.error("Failed to fetch question:", err);
-    }
+  /* 
+   * LOCAL GENERATOR LOGIC 
+   */
+  const fetchQuestion = () => {
+    const q = generator.generate({
+      user_id: 'extension_user',
+      possible_qtypes: [
+        'arithmetic', 'multiplication', 'division',
+        'growth_compounding', 'ratios_margins',
+        'breakeven_estimation', 'splits_allocation'
+      ],
+      difficulty_range: [0, 4]
+    });
+    setQuestion(q);
   };
 
   useEffect(() => {
     fetchQuestion();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!question || !userAnswer) return;
 
-    try {
-      const res = await fetch('http://localhost:5000/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: 'extension_user',
-          qid: question.qid,
-          answer: userAnswer
-        })
-      });
-      const data: VerifyResponse = await res.json();
+    const res = generator.verifyAnswer(question.qid, userAnswer);
 
-      if (data.ok) {
-        // Correct
-        setInputClass("answer-input-correct");
-        setIsBouncing(true);
+    if (res.ok) {
+      // Correct
+      setInputClass("answer-input-correct");
+      setIsBouncing(true);
 
-        setTimeout(() => {
-          const newCount = correctCount + 1;
-          setCorrectCount(newCount);
-          if (newCount >= 3) {
-            setIsUnlocked(true);
-          } else {
-            // Next question
-            setQuestion(null);
-            setUserAnswer("");
-            setInputClass("");
-            setIsBouncing(false);
-            fetchQuestion();
-          }
-        }, 1000); // Wait for animation
-
-      } else {
-        // Incorrect
-        setIsShaking(true);
-        setInputClass("answer-input-wrong");
-        setTimeout(() => {
-          setIsShaking(false);
+      setTimeout(() => {
+        const newCount = correctCount + 1;
+        setCorrectCount(newCount);
+        if (newCount >= 3) {
+          setIsUnlocked(true);
+        } else {
+          // Next question
+          setQuestion(null);
+          setUserAnswer("");
           setInputClass("");
-        }, 500);
-      }
-
-    } catch (err) {
-      console.error("Verification failed:", err);
+          setIsBouncing(false);
+          fetchQuestion();
+        }
+      }, 1000);
+    } else {
+      // Incorrect
+      setIsShaking(true);
+      setInputClass("answer-input-wrong");
+      setTimeout(() => {
+        setIsShaking(false);
+        setInputClass("");
+      }, 500);
     }
   };
 
