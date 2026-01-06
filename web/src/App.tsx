@@ -180,12 +180,7 @@ function App() {
           Submit
         </button>
 
-        {question && (
-          <div style={{ marginTop: '10px' }}>
-            <span className="tag-badge">{DIFFICULTY_LABELS[question.difficulty]}</span>
-            <span className="tag-badge">{question.type.replace('_', ' ')}</span>
-          </div>
-        )}
+
 
       </div>
 
@@ -198,7 +193,16 @@ function App() {
         </span>
         <div className={`tags-menu ${tagsOpen ? 'open' : ''}`}>
           {/* Reusing existing scroll logic structure but ignoring for minimal implementation since we show active tags above */}
-          <span className="tag-item">All Topics</span>
+          {/* <span className="tag-item">All Topics</span> */}
+          {question ? (
+            <>
+              <span className="tag-item">{DIFFICULTY_LABELS[question.difficulty]}</span>
+              <span className="tag-item">{question.type.replace('_', ' ')}</span>
+              <span className="tag-item">{question.format}</span>
+            </>
+          ) : (
+            <span className="tag-item">Loading tags...</span>
+          )}
         </div>
       </div>
 
