@@ -323,6 +323,83 @@
   padding-top: 2rem;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
 
-  opacity: 0;
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+
+
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+  border-color: #ff4d4d !important;
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.4) !important;
+}
+
+@keyframes bounceGreen {
+  0% {
+    transform: translateY(0);
+    border-color: rgba(183, 171, 255, 0.075);
+  }
+
+  25% {
+    transform: translateY(-10px);
+  }
+
+  50% {
+    transform: translateY(0);
+    border-color: #4dff88;
+    box-shadow: 0 0 20px rgba(77, 255, 136, 0.4);
+  }
+
+  75% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0);
+    border-color: rgba(183, 171, 255, 0.075);
+  }
+}
+
+.success-bounce {
+  animation: bounceGreen 1.0s ease-in-out both;
+}
+
+.answer-input-correct {
+  border-color: #4dff88 !important;
+  color: #4dff88 !important;
+}
+
+.answer-input-wrong {
+  border-color: #ff4d4d !important;
+  color: #ff4d4d !important;
+}
+
+.unlock-message {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #4dff88;
+  margin-top: 2rem;
+  animation: fadeInUp 0.5s ease-out;
 }

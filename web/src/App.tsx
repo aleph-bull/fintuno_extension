@@ -1,19 +1,148 @@
 import fintunoLogo from '/long.png'
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+interface QuestionResponse {
+  qid: string;
+  prompt: string;
+  format: string;
+  type: string;
+  difficulty: number;
+}
+
+interface VerifyResponse {
+  ok: boolean;
+  xp: number;
+  correct_answer?: number;
+}
 
 function App() {
   const params = new URLSearchParams(window.location.search);
   const siteName = params.get('site') || 'Site';
-
   const resetTimestamp = params.get('resetAt');
+
   let resetText = "";
   if (resetTimestamp) {
     const date = new Date(parseInt(resetTimestamp));
     resetText = `Resets at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} otherwise.`;
   }
 
+  const [question, setQuestion] = useState<QuestionResponse | null>(null);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [correctCount, setCorrectCount] = useState(0);
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
+
+  // Animation states
+  const [isShaking, setIsShaking] = useState(false);
+  const [isBouncing, setIsBouncing] = useState(false);
+  const [inputClass, setInputClass] = useState(""); // 'answer-input-correct' | 'answer-input-wrong' | ''
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const fetchQuestion = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'extension_user',
+          possible_qtypes: [
+            'arithmetic', 'multiplication', 'division',
+            'growth_compounding', 'ratios_margins',
+            'breakeven_estimation', 'splits_allocation'
+          ],
+          difficulty_range: [0, 4]
+        })
+      });
+      const data = await res.json();
+      setQuestion(data);
+    } catch (err) {
+      console.error("Failed to fetch question:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuestion();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!question || !userAnswer) return;
+
+    try {
+      const res = await fetch('http://localhost:5000/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'extension_user',
+          qid: question.qid,
+          answer: userAnswer
+        })
+      });
+      const data: VerifyResponse = await res.json();
+
+      if (data.ok) {
+        // Correct
+        setInputClass("answer-input-correct");
+        setIsBouncing(true);
+
+        setTimeout(() => {
+          const newCount = correctCount + 1;
+          setCorrectCount(newCount);
+          if (newCount >= 3) {
+            setIsUnlocked(true);
+          } else {
+            // Next question
+            setQuestion(null);
+            setUserAnswer("");
+            setInputClass("");
+            setIsBouncing(false);
+            fetchQuestion();
+          }
+        }, 1000); // Wait for animation
+
+      } else {
+        // Incorrect
+        setIsShaking(true);
+        setInputClass("answer-input-wrong");
+        setTimeout(() => {
+          setIsShaking(false);
+          setInputClass("");
+        }, 500);
+      }
+
+    } catch (err) {
+      console.error("Verification failed:", err);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
+
+  const getDifficultyLabel = (d: number) => {
+    if (d === 0) return "easy";
+    if (d === 1) return "medium";
+    if (d === 2) return "hard";
+    if (d === 3) return "very hard";
+    return "expert";
+  };
+
+  if (isUnlocked) {
+    return (
+      <>
+        <div className="logo-container">
+          <a href="https://fintuno.com" target="_blank">
+            <img src={fintunoLogo} className="logo" alt="Fintuno logo" />
+          </a>
+        </div>
+        <h1 className="gradient-text">{siteName} is unlocked!</h1>
+        <div className="unlock-message">Great job! Access granted.</div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -24,13 +153,34 @@ function App() {
         </a>
       </div>
       <h1 className="gradient-text">{siteName} is blocked</h1>
-      <div className="box">
-        <p className="box-answer-text">Answer the question(s) to unlock {siteName}</p>
-        <p className="box-question-text">What is 2+2?</p>
-        <input type="text" inputMode="decimal" className="box-input" placeholder="input your answer here" />
-        <button className="submission-button">Submit</button>
 
+      <div className={`box ${isShaking ? 'shake' : ''} ${isBouncing ? 'success-bounce' : ''}`}>
+        <p className="box-answer-text">
+          Answer {3 - correctCount} more to unlock
+        </p>
+
+        {question ? (
+          <>
+            <p className="box-question-text">{question.prompt}</p>
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="decimal"
+              className={`box-input ${inputClass}`}
+              placeholder="Input your answer"
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+          </>
+        ) : (
+          <p className="box-question-text">Loading question...</p>
+        )}
+
+        <button className="submission-button" onClick={handleSubmit}>Submit</button>
       </div>
+
       <div className="tags-dropdown-container">
         <span
           className="tags-label"
@@ -48,12 +198,13 @@ function App() {
             ←
           </div>
           <div className="tags-scroll-area">
-            <span className="tag-item">interest</span>
-            <span className="tag-item">hard</span>
-            <span className="tag-item">mental math</span>
-            <span className="tag-item">trigonometry</span>
-            <span className="tag-item">calculus</span>
-            <span className="tag-item">algebra</span>
+            {question && (
+              <>
+                <span className="tag-item">{getDifficultyLabel(question.difficulty)}</span>
+                <span className="tag-item">{question.type.replace('_', ' ')}</span>
+                <span className="tag-item">{question.format}</span>
+              </>
+            )}
           </div>
           <div className="scroll-arrow right" onClick={(e) => {
             const scrollArea = e.currentTarget.previousElementSibling;
@@ -65,7 +216,9 @@ function App() {
           </div>
         </div>
       </div>
-      <div className="question-number-text">Question 1 of 3</div>
+
+      <div className="question-number-text">Progress: {correctCount} / 3</div>
+
       <div className="card">
         <p className="fine-text">
           Fintuno, all rights reserved
