@@ -1,17 +1,40 @@
 import fintunoLogo from '/long.png'
 import './App.css'
 import { useState, useEffect, useRef } from 'react'
-import { QuestionGenerator } from './utils/question_generation';
-import type { QuestionResponse } from './utils/question_generation';
 
-const generator = new QuestionGenerator();
+interface Question {
+  qid: string;
+  prompt: string;
+  format: string;
+  type: string;
+  difficulty: number;
+}
 
-
+const DIFFICULTY_LABELS: Record<number, string> = {
+  0: 'easy',
+  1: 'medium',
+  2: 'hard',
+  3: 'very hard',
+  4: 'expert'
+};
 
 function App() {
   const params = new URLSearchParams(window.location.search);
   const siteName = params.get('site') || 'Site';
   const resetTimestamp = params.get('resetAt');
+
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [answer, setAnswer] = useState('');
+  const [correctCount, setCorrectCount] = useState(0);
+  const [inputClass, setInputClass] = useState('');
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Vercel env var
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   let resetText = "";
   if (resetTimestamp) {
@@ -19,86 +42,88 @@ function App() {
     resetText = `Resets at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} otherwise.`;
   }
 
-  const [question, setQuestion] = useState<QuestionResponse | null>(null);
-  const [userAnswer, setUserAnswer] = useState("");
-  const [correctCount, setCorrectCount] = useState(0);
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [tagsOpen, setTagsOpen] = useState(false);
+  const fetchQuestion = async () => {
+    if (!API_BASE) {
+      setApiError("API not configured");
+      return;
+    }
 
-  // Animation states
-  const [isShaking, setIsShaking] = useState(false);
-  const [isBouncing, setIsBouncing] = useState(false);
-  const [inputClass, setInputClass] = useState(""); // 'answer-input-correct' | 'answer-input-wrong' | ''
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  /* 
-   * LOCAL GENERATOR LOGIC 
-   */
-  const fetchQuestion = () => {
-    const q = generator.generate({
-      user_id: 'extension_user',
-      possible_qtypes: [
-        'arithmetic', 'multiplication', 'division',
-        'growth_compounding', 'ratios_margins',
-        'breakeven_estimation', 'splits_allocation'
-      ],
-      difficulty_range: [0, 4]
-    });
-    setQuestion(q);
-  };
-
-  useEffect(() => {
-    fetchQuestion();
-  }, []);
-
-  const handleSubmit = () => {
-    if (!question || !userAnswer) return;
-
-    const res = generator.verifyAnswer(question.qid, userAnswer);
-
-    if (res.ok) {
-      // Correct
-      setInputClass("answer-input-correct");
-      setIsBouncing(true);
-
-      setTimeout(() => {
-        const newCount = correctCount + 1;
-        setCorrectCount(newCount);
-        if (newCount >= 3) {
-          setIsUnlocked(true);
-        } else {
-          // Next question
-          setQuestion(null);
-          setUserAnswer("");
-          setInputClass("");
-          setIsBouncing(false);
-          fetchQuestion();
-        }
-      }, 1000);
-    } else {
-      // Incorrect
-      setIsShaking(true);
-      setInputClass("answer-input-wrong");
-      setTimeout(() => {
-        setIsShaking(false);
-        setInputClass("");
-      }, 500);
+    try {
+      const res = await fetch(`${API_BASE}/api/question`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'user_' + Math.random().toString(36).substr(2, 9),
+          possible_qformats: ["enter_number"],
+          difficulty_range: [0, 4] // Allow all diffs
+        })
+      });
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setQuestion(data);
+      setAnswer('');
+      if (inputRef.current) inputRef.current.focus();
+    } catch (e) {
+      console.error(e);
+      setApiError("Failed to load question");
     }
   };
+
+  const submitAnswer = async () => {
+    if (!question || !answer || !API_BASE) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'anon',
+          qid: question.qid,
+          answer: answer
+        })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        // Correct
+        setInputClass('success');
+        setTimeout(() => {
+          setInputClass('');
+          const newCount = correctCount + 1;
+          setCorrectCount(newCount);
+          if (newCount >= 3) {
+            setIsUnlocked(true);
+            // Trigger existing unlock if available (e.g. postMessage)
+            // Assuming "unlocked" UI state is enough for this task
+          } else {
+            fetchQuestion();
+          }
+        }, 500);
+      } else {
+        // Incorrect
+        setInputClass('shake');
+        setAnswer(''); // Clear wrong answer
+        setTimeout(() => setInputClass(''), 500);
+      }
+    } catch (e) {
+      console.error(e);
+      setApiError("Verification error");
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    if (API_BASE) {
+      fetchQuestion();
+    } else {
+      setApiError("API configuration missing. Check VITE_API_BASE_URL.");
+    }
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSubmit();
+      submitAnswer();
     }
-  };
-
-  const getDifficultyLabel = (d: number) => {
-    if (d === 0) return "easy";
-    if (d === 1) return "medium";
-    if (d === 2) return "hard";
-    if (d === 3) return "very hard";
-    return "expert";
   };
 
   if (isUnlocked) {
@@ -109,8 +134,11 @@ function App() {
             <img src={fintunoLogo} className="logo" alt="Fintuno logo" />
           </a>
         </div>
-        <h1 className="gradient-text">{siteName} is unlocked!</h1>
-        <div className="unlock-message">Great job! Access granted.</div>
+        <h1 className="gradient-text">{siteName} Unlocked!</h1>
+        <div className="box" style={{ height: '150px' }}>
+          <p className="box-answer-text" style={{ textAlign: 'center' }}>Great job!</p>
+          <button className="submission-button" onClick={() => window.location.reload()}>Reload</button>
+        </div>
       </>
     );
   }
@@ -123,33 +151,42 @@ function App() {
           <img src={fintunoLogo} className="logo" alt="Fintuno logo" />
         </a>
       </div>
+
       <h1 className="gradient-text">{siteName} is blocked</h1>
 
-      <div className={`box ${isShaking ? 'shake' : ''} ${isBouncing ? 'success-bounce' : ''}`}>
-        <p className="box-answer-text">
-          Answer {3 - correctCount} more to unlock
-        </p>
+      <div className="box">
+        <p className="box-answer-text">Answer the question(s) to unlock {siteName}</p>
 
-        {question ? (
-          <>
-            <p className="box-question-text">{question.prompt}</p>
-            <input
-              ref={inputRef}
-              type="text"
-              inputMode="decimal"
-              className={`box-input ${inputClass}`}
-              placeholder="Input your answer"
-              value={userAnswer}
-              onChange={(e) => setUserAnswer(e.target.value)}
-              onKeyDown={handleKeyDown}
-              autoFocus
-            />
-          </>
+        {apiError ? (
+          <p className="box-question-text" style={{ color: '#ff4d4d' }}>{apiError}</p>
         ) : (
-          <p className="box-question-text">Loading question...</p>
+          <p className="box-question-text">{question ? question.prompt : "Loading..."}</p>
         )}
 
-        <button className="submission-button" onClick={handleSubmit}>Submit</button>
+        {/* Existing Layout maintained but dynamic input */}
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="decimal"
+          className={`box-input ${inputClass}`}
+          placeholder="input your answer here"
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={!question}
+        />
+
+        <button className="submission-button" onClick={submitAnswer} disabled={!question}>
+          Submit
+        </button>
+
+        {question && (
+          <div style={{ marginTop: '10px' }}>
+            <span className="tag-badge">{DIFFICULTY_LABELS[question.difficulty]}</span>
+            <span className="tag-badge">{question.type.replace('_', ' ')}</span>
+          </div>
+        )}
+
       </div>
 
       <div className="tags-dropdown-container">
@@ -160,35 +197,12 @@ function App() {
           question tags: {tagsOpen ? '▲' : '▼'}
         </span>
         <div className={`tags-menu ${tagsOpen ? 'open' : ''}`}>
-          <div className="scroll-arrow left" onClick={(e) => {
-            const scrollArea = e.currentTarget.nextElementSibling;
-            if (scrollArea) {
-              scrollArea.scrollBy({ left: -100, behavior: 'smooth' });
-            }
-          }}>
-            ←
-          </div>
-          <div className="tags-scroll-area">
-            {question && (
-              <>
-                <span className="tag-item">{getDifficultyLabel(question.difficulty)}</span>
-                <span className="tag-item">{question.type.replace('_', ' ')}</span>
-                <span className="tag-item">{question.format}</span>
-              </>
-            )}
-          </div>
-          <div className="scroll-arrow right" onClick={(e) => {
-            const scrollArea = e.currentTarget.previousElementSibling;
-            if (scrollArea) {
-              scrollArea.scrollBy({ left: 100, behavior: 'smooth' });
-            }
-          }}>
-            →
-          </div>
+          {/* Reusing existing scroll logic structure but ignoring for minimal implementation since we show active tags above */}
+          <span className="tag-item">All Topics</span>
         </div>
       </div>
 
-      <div className="question-number-text">Progress: {correctCount} / 3</div>
+      <div className="question-number-text">Question {correctCount + 1} of 3</div>
 
       <div className="card">
         <p className="fine-text">
