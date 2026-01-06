@@ -1,4 +1,4 @@
-import fintunoLogo from '/single.png'
+import fintunoLogo from '/long.png'
 import './App.css'
 import { useState } from 'react'
 
