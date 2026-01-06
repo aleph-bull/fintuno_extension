@@ -251,6 +251,7 @@
 .tag-item {
   display: inline-block;
   padding: 6px 14px;
+  margin: 0 4px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
