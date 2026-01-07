@@ -251,6 +251,7 @@
 }
 
 .tag-item {
+  margin: 5px;
   display: inline-block;
   padding: 6px 14px;
   font-size: 0.85rem;
