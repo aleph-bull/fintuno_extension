@@ -210,7 +210,7 @@ function App() {
 
       <div className="card">
         <p className="fine-text">
-          Fintuno, all rights reserved
+          Fintuno v0.0.1 alpha
         </p>
       </div>
     </>
