@@ -1,26 +1,63 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <style>
-        body {
-            width: 200px;
-            font-family: sans-serif;
-            padding: 10px;
-            text-align: center;
-        }
-
-        #time-left {
-            font-size: 16px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="popup.css">
 </head>
-
 <body>
-    <div id="time-left"></div>
+    <div class="header">
+        <div class="logo-section">
+            <img src="single.png" class="logo-img" alt="Logo">
+            <span class="logo-text">Fintuno</span>
+        </div>
+        <button class="settings-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="timer-label">Time left on blocked apps</div>
+    
+    <!-- Updated ID to match JS -->
+    <h1 id="time-left" class="timer-large">--:--</h1>
+    
+    <div class="reset-text">Resets at 5:00 PM</div>
+
+    <div class="blocked-list">
+        <div class="site-row">
+            <div class="site-info">
+                <div class="site-icon"></div>
+                <span class="site-name">Instagram.com</span>
+            </div>
+            <span class="site-time">7m</span>
+        </div>
+        <div class="site-row">
+            <div class="site-info">
+                <div class="site-icon"></div>
+                <span class="site-name">Twitter.com</span>
+            </div>
+            <span class="site-time">12m</span>
+        </div>
+        <div class="site-row">
+            <div class="site-info">
+                <div class="site-icon"></div>
+                <span class="site-name">TikTok.com</span>
+            </div>
+            <span class="site-time">9m</span>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn-primary">Fintuno Home</button>
+        <button class="btn-secondary">Resources</button>
+    </div>
+
+    <button class="footer-toggle">
+        Toggle Blocking Active State
+    </button>
+
     <script src="storage.js"></script>
     <script src="popup.js"></script>
 </body>
-
 </html>
