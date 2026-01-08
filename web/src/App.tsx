@@ -32,6 +32,8 @@ function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [boxHeight, setBoxHeight] = useState<string | number>('auto');
 
   // Vercel env var
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -111,6 +113,18 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (!contentRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (contentRef.current) {
+        // Add padding (12px top + 12px bottom = 24px)
+        setBoxHeight(contentRef.current.offsetHeight + 24);
+      }
+    });
+    observer.observe(contentRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // Initial load
   useEffect(() => {
     if (API_BASE) {
@@ -154,34 +168,33 @@ function App() {
 
       <h1 className="gradient-text">{siteName} is blocked</h1>
 
-      <div className="box">
-        <p className="box-answer-text">Answer the question(s) to unlock {siteName}</p>
+      <div className="box" style={{ height: boxHeight }}>
+        <div className="box-content-wrapper" ref={contentRef}>
+          <p className="box-answer-text">Answer the question(s) to unlock {siteName}</p>
 
-        {apiError ? (
-          <p className="box-question-text" style={{ color: '#ff4d4d' }}>{apiError}</p>
-        ) : (
-          <p className="box-question-text">{question ? question.prompt : "Loading..."}</p>
-        )}
+          {apiError ? (
+            <p className="box-question-text" style={{ color: '#ff4d4d' }}>{apiError}</p>
+          ) : (
+            <p className="box-question-text">{question ? question.prompt : "Loading..."}</p>
+          )}
 
-        {/* Existing Layout maintained but dynamic input */}
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="decimal"
-          className={`box-input ${inputClass}`}
-          placeholder="input your answer here"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={!question}
-        />
+          {/* Existing Layout maintained but dynamic input */}
+          <input
+            ref={inputRef}
+            type="text"
+            inputMode="decimal"
+            className={`box-input ${inputClass}`}
+            placeholder="input your answer here"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={!question}
+          />
 
-        <button className="submission-button" onClick={submitAnswer} disabled={!question}>
-          Submit
-        </button>
-
-
-
+          <button className="submission-button" onClick={submitAnswer} disabled={!question}>
+            Submit
+          </button>
+        </div>
       </div>
 
       <div className="tags-dropdown-container">
