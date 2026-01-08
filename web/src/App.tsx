@@ -114,16 +114,25 @@ function App() {
   };
 
   useEffect(() => {
-    if (!contentRef.current) return;
-    const observer = new ResizeObserver(() => {
-      if (contentRef.current) {
-        // Add padding (12px top + 12px bottom = 24px)
-        setBoxHeight(contentRef.current.offsetHeight + 24);
+    const el = contentRef.current;
+    if (!el) return;
+
+    const updateHeight = () => {
+      if (el) {
+        // Add padding (12px top + 12px bottom = 24px) + a little buffer if needed
+        setBoxHeight(el.offsetHeight + 24);
       }
-    });
-    observer.observe(contentRef.current);
+    };
+
+    // Update immediately
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+
     return () => observer.disconnect();
-  }, []);
+  }, [question, apiError]); // re-run when content content inputs change to ensure sync
+
 
   // Initial load
   useEffect(() => {
