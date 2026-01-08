@@ -12,7 +12,7 @@ body {
     margin: 0;
     padding: 16px;
     box-sizing: border-box;
-    font-family: 'Cal Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     color: white;
     background-color: #17132c;
     background-image:
@@ -35,21 +35,12 @@ body {
 .logo-section {
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
-.logo-text {
-    font-size: 20px;
-    font-weight: bold;
-    background: linear-gradient(90deg, #FFFFFF 0%, #FF8BA7 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.logo-img {
-    width: 24px;
-    height: 24px;
+.logo-img-long {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
 }
 
 .settings-btn {
@@ -77,6 +68,7 @@ body {
 }
 
 .timer-large {
+    font-family: 'Cal Sans', sans-serif;
     font-size: 48px;
     font-weight: bold;
     margin: 0;
