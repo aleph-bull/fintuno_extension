@@ -59,6 +59,53 @@ async function updateTimer() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateTimer();
+    renderSites();
     setInterval(updateTimer, UPDATE_INTERVAL_MS);
 });
+
+async function renderSites() {
+    const listEl = document.getElementById('blocked-list');
+    listEl.innerHTML = ''; // Clear
+
+    try {
+        const sites = await Storage.getAllSites();
+        const siteKeys = Object.keys(sites);
+
+        if (siteKeys.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; padding:10px; font-size:12px; color:rgba(255,255,255,0.4)">No active sites</div>';
+            return;
+        }
+
+        // Sort by name or usage? Alphabetical for now.
+        siteKeys.sort();
+
+        siteKeys.forEach(key => {
+            const site = sites[key];
+            // If we have displayName, use it. Otherwise use key.
+            const displayName = site.displayName || key;
+            const iconLetter = displayName.charAt(0).toUpperCase();
+
+            // Create row
+            const row = document.createElement('div');
+            row.className = 'site-row';
+
+            // We don't have individual site usage in the current schema (only global usage).
+            // So we won't show a time per site, or we could show "Active" or similar.
+            // For now, let's just show the name.
+
+            row.innerHTML = `
+                <div class="site-info">
+                    <div class="site-icon">${iconLetter}</div>
+                    <span class="site-name">${displayName}</span>
+                </div>
+                <!-- <span class="site-time">--</span> --> 
+            `;
+
+            listEl.appendChild(row);
+        });
+
+    } catch (e) {
+        console.error("Failed to render sites:", e);
+    }
+}
 

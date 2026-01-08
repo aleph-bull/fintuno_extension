@@ -1,14 +1,15 @@
 @font-face {
     font-family: 'Cal Sans';
-    src: url('../web/src/assets/fonts/CalSans-SemiBold.woff2') format('woff2');
+    src: url('CalSans-SemiBold.woff2') format('woff2');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
 }
 
 body {
-    width: 350px;
-    height: 500px;
+    width: 320px;
+    height: auto;
+    min-height: 480px;
     margin: 0;
     padding: 16px;
     box-sizing: border-box;
@@ -29,7 +30,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .logo-section {
@@ -38,7 +39,7 @@ body {
 }
 
 .logo-img-long {
-    height: 28px;
+    height: 38px;
     width: auto;
     object-fit: contain;
 }
@@ -64,7 +65,7 @@ body {
 .timer-label {
     font-size: 13px;
     color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .timer-large {
@@ -79,7 +80,7 @@ body {
 .reset-text {
     font-size: 13px;
     color: rgba(255, 255, 255, 0.4);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 /* Blocked List */
@@ -87,17 +88,41 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 4px;
+    /* Space for scrollbar */
+}
+
+/* Custom Scrollbar */
+.blocked-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.blocked-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.blocked-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.blocked-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .site-row {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .site-info {
@@ -111,6 +136,10 @@ body {
     height: 20px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
 }
 
 .site-name {
@@ -127,46 +156,55 @@ body {
 .action-buttons {
     display: flex;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .btn-primary {
     flex: 1;
-    height: 40px;
-    background: linear-gradient(90deg, #FF5F6D 0%, #FFC371 100%);
+    height: 3rem;
+    /* Matching App.css */
+    /* linear-gradient(135deg, #F9516B 0%, #FF7070 100%) */
+    background: linear-gradient(135deg, #F9516B 0%, #FF7070 100%);
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
+    /* Matching App.css */
     color: white;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(255, 95, 109, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    transition: all 0.3s ease;
+    outline: none;
 }
 
 .btn-secondary {
     flex: 1;
-    height: 40px;
+    height: 3rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 12px;
     color: white;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
     filter: brightness(1.1);
-    transform: translateY(-1px);
 }
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
 /* Footer Toggle */
 .footer-toggle {
     margin-top: auto;
+    /* Push to bottom but container is tight now */
     width: 100%;
     padding: 10px;
     text-align: center;
@@ -176,6 +214,7 @@ body {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
+    transition: background 0.2s;
 }
 
 .footer-toggle:hover {

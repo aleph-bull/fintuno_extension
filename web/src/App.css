@@ -50,7 +50,7 @@
 }
 
 .box {
-  width: 320px;
+  width: 500px;
   min-height: 280px;
   height: auto;
 
@@ -66,9 +66,9 @@
 
   /* display: flex; Removed to allow height animation on container, flex moved to wrapper */
   /* flex-direction: column; */
-  /* align-items: center; */
-  /* justify-content: center; */
-  /* gap: 0.8rem; */
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
 
 
   text-align: left;
