@@ -77,7 +77,7 @@ async function handleCheckAccess(url) {
             // MIGRATION FIX:
             // If this is a legacy site and isBlocked is TRUE, it's likely stale state from previous version.
             // We should reset it to FALSE to allow the usage limit system to take over.
-            const LEGACY_BLOCKED = ["x.com", "youtube.com", "twitter.com"];
+            const LEGACY_BLOCKED = ["x.com", "youtube.com", "twitter.com", "instagram.com", "tiktok.com", "snapchat.com"];
             if (LEGACY_BLOCKED.includes(siteKey) && siteState.isBlocked) {
                 console.log(`Migrating stale state for ${siteKey}: unblocking.`);
                 siteState.isBlocked = false;
